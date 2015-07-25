@@ -12,6 +12,7 @@ def testDeleteMatches():
 def testDelete():
     deleteMatches()
     deletePlayers()
+    deleteTournaments()
     print "2. Player records can be deleted."
 
 

@@ -35,7 +35,7 @@ def registerPlayerUpdated(player_id, name):
     db.close()
 
 
-def createRandomMatches(player_list, num_matches):
+def createRandomMatches(tournament, player_list, num_matches):
     num_players = len(player_list)
     for i in xrange(num_matches):
         print 'match1'
@@ -47,7 +47,7 @@ def createRandomMatches(player_list, num_matches):
         winner_name = player_list[player1_index][1]
         loser_id = player_list[player2_index][0]
         loser_name = player_list[player2_index][1]
-        reportMatch(winner_id, loser_id)
+        reportMatch(tournament, winner_id, loser_id)
         print "%s (id=%s) beat %s (id=%s)" % (
             winner_name,
             winner_id,
@@ -57,12 +57,11 @@ def createRandomMatches(player_list, num_matches):
  
 def setup_tournament():
     testDelete()
-    registerTournament('first') 
+    tournament_id = registerTournament('first')
     for player in the_players:
         registerPlayerUpdated(player[0], player[1])
-        enterPlayerInTournament(player[1], 'first')
-    registerTournament('first') 
-    createRandomMatches(the_players, 10)
+        enterPlayerInTournament('first', player[1]) 
+    createRandomMatches(tournament_id, the_players, 10)
  
  
 if __name__ == '__main__':

@@ -28,6 +28,14 @@ def deletePlayers():
     db.commit()
     db.close()
 
+def deleteTournaments():
+    """Remove all the tournament records from the database."""
+    db = psycopg2.connect("dbname=tournament")
+    db_cursor = db.cursor()
+    db_cursor.execute("DELETE FROM tournaments CASCADE")
+    db.commit()
+    db.close()    
+
 
 def countPlayers():
     """Returns the number of players currently registered."""
@@ -55,7 +63,7 @@ def registerPlayer(name):
     db.commit()
     db.close()
 
-def registerTournament(tourney_name):
+def registerTournament(tournament):
     """Adds a tournament to the tournaments table.
 
     Args:
@@ -63,22 +71,34 @@ def registerTournament(tourney_name):
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
-    db_cursor.execute("INSERT INTO tournaments (tournament_name) VALUES (%s)", (tourney_name,))
+    db_cursor.execute("INSERT INTO tournaments (tournament_name) VALUES (%s)", (tournament,))
     db.commit()
+    db_cursor.execute("SELECT tournament_id from tournaments WHERE tournament_name = %s", (tournament,))
+    for row in db_cursor:
+        id = row[0]
     db.close()
+    return id
 
-def enterPlayerInTournament(player_name, tourney_name):
-    """Enters a player in a tournament.
+def enterPlayerInTournament(tournament_name, player_name, player_id=-1):
+    """Enters a player in a tournament. Allows passing of id in case player 
+        or tournament name isn't unique
 
     Args:
         player_name: name of player to be added
-        tourney_name: name of tournament
+        tournament_name: name of tournament
+        player_id: optional argument to specify id of player since
+                    player names are not unique
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
-    db_cursor.execute("INSERT INTO player_tourney_map (player_name, tourney_name) VALUES \
-                        ((SELECT player_id FROM players WHERE player_name = %s), \
-                        (SELECT tournament_id FROM tournaments WHERE tourney_name = %s))", (player_name, tourney_name))
+    if(player_id >= 0):
+        db_cursor.execute("INSERT INTO tournament_player_map (tournament_id, player_id) VALUES \
+                          ((SELECT tournament_id FROM tournaments WHERE tournament_name = %s), %s)",
+                          (tournament_name, player_id))
+    else:    
+        db_cursor.execute("INSERT INTO tournament_player_map (tournament_id, player_id) VALUES \
+                         ((SELECT tournament_id FROM tournaments WHERE tournament_name = %s), \
+                         (SELECT player_id FROM players WHERE player_name = %s))", (tournament_name, player_name))
     db.commit()
     db.close()
 
@@ -106,16 +126,17 @@ def playerStandings():
     return standings
 
 
-def reportMatch(winner, loser):
+def reportMatch(tournament, winner, loser):
     """Records the outcome of a single match between two players.
 
     Args:
+      tournament: the id of the tournament for this match
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor() 
-    db_cursor.execute("INSERT INTO matches (match_winner, match_loser) VALUES (%s, %s)", (winner, loser))    
+    db_cursor.execute("INSERT INTO matches (tournament_id, match_winner, match_loser) VALUES (%s, %s, %s)", (tournament, winner, loser))    
     db.commit()
     db.close()
  

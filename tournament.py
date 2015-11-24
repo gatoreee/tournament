@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# 
+#
 # tournament.py -- implementation of a Swiss-system tournament
 #
 
@@ -28,13 +28,14 @@ def deletePlayers():
     db.commit()
     db.close()
 
+
 def deleteTournaments():
     """Remove all the tournament records from the database."""
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
     db_cursor.execute("DELETE FROM tournaments CASCADE")
     db.commit()
-    db.close()    
+    db.close()
 
 
 def countPlayers():
@@ -50,10 +51,10 @@ def countPlayers():
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
-  
+
     The database assigns a unique serial id number for the player.  (This
     should be handled by your SQL database schema, not in your Python code.)
-  
+
     Args:
       name: the player's full name (need not be unique).
     """
@@ -63,6 +64,7 @@ def registerPlayer(name):
     db.commit()
     db.close()
 
+
 def registerTournament(tournament):
     """Adds a tournament to the tournaments table.
 
@@ -71,16 +73,19 @@ def registerTournament(tournament):
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
-    db_cursor.execute("INSERT INTO tournaments (tournament_name) VALUES (%s)", (tournament,))
+    db_cursor.execute("INSERT INTO tournaments (tournament_name) \
+        VALUES (%s)", (tournament,))
     db.commit()
-    db_cursor.execute("SELECT tournament_id from tournaments WHERE tournament_name = %s", (tournament,))
+    db_cursor.execute("SELECT tournament_id from tournaments \
+        WHERE tournament_name = %s", (tournament,))
     for row in db_cursor:
         id = row[0]
     db.close()
     return id
 
+
 def enterPlayerInTournament(tournament_name, player_name, player_id=-1):
-    """Enters a player in a tournament. Allows passing of id in case player 
+    """Enters a player in a tournament. Allows passing of id in case player
         or tournament name isn't unique
 
     Args:
@@ -93,20 +98,25 @@ def enterPlayerInTournament(tournament_name, player_name, player_id=-1):
     db_cursor = db.cursor()
     if(player_id >= 0):
         db_cursor.execute("INSERT INTO tournament_player_map (tournament_id, player_id) VALUES \
-                          ((SELECT tournament_id FROM tournaments WHERE tournament_name = %s), %s)",
+                          ((SELECT tournament_id FROM tournaments \
+                            WHERE tournament_name = %s), %s)",
                           (tournament_name, player_id))
-    else:    
+    else:
         db_cursor.execute("INSERT INTO tournament_player_map (tournament_id, player_id) VALUES \
-                         ((SELECT tournament_id FROM tournaments WHERE tournament_name = %s), \
-                         (SELECT player_id FROM players WHERE player_name = %s))", (tournament_name, player_name))
+                         ((SELECT tournament_id FROM tournaments \
+                            WHERE tournament_name = %s), \
+                          (SELECT player_id FROM players \
+                            WHERE player_name = %s))",
+                          (tournament_name, player_name))
     db.commit()
     db.close()
+
 
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
 
-    The first entry in the list should be the player in first place, or a player
-    tied for first place if there is currently a tie.
+    The first entry in the list should be the player in first place, or a
+    player tied for first place if there is currently a tie.
 
     Returns:
       A list of tuples, each of which contains (id, name, wins, matches):
@@ -117,10 +127,13 @@ def playerStandings():
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
-    db_cursor.execute("SELECT player_id, player_name, count(match_winner) AS matches_won, (SELECT count(*) \
+    db_cursor.execute("SELECT player_id, player_name, count(match_winner) \
+                        AS matches_won, (SELECT count(*) \
                         FROM matches WHERE player_id = match_winner \
-                        OR player_id = match_loser) AS matches_played FROM players LEFT JOIN matches \
-                        ON player_id = match_winner GROUP BY player_id ORDER BY matches_won desc")
+                        OR player_id = match_loser) AS matches_played \
+                        FROM players LEFT JOIN matches \
+                        ON player_id = match_winner GROUP BY player_id \
+                        ORDER BY matches_won desc")
     standings = db_cursor.fetchall()
     db.close
     return standings
@@ -135,20 +148,21 @@ def reportMatch(tournament, winner, loser):
       loser:  the id number of the player who lost
     """
     db = psycopg2.connect("dbname=tournament")
-    db_cursor = db.cursor() 
-    db_cursor.execute("INSERT INTO matches (tournament_id, match_winner, match_loser) VALUES (%s, %s, %s)", (tournament, winner, loser))    
+    db_cursor = db.cursor()
+    db_cursor.execute("INSERT INTO matches (tournament_id, match_winner, match_loser) \
+        VALUES (%s, %s, %s)", (tournament, winner, loser))
     db.commit()
     db.close()
- 
- 
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
-  
+
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
-  
+
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
         id1: the first player's unique id
@@ -162,7 +176,7 @@ def swissPairings():
     db_cursor.execute("SELECT * FROM standings")
     print(db_cursor)
     ids, names, wins, played, omw = zip(*db_cursor)
-    if (len(ids))%2 ==   0:
+    if (len(ids)) % 2 == 0:
         print('Even number of players')
     first_ids = ids[::2]
     second_ids = ids[1::2]

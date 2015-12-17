@@ -12,6 +12,7 @@ def testDeleteMatches():
 
 def testDelete():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     deleteTournaments()
     print "2. Player records can be deleted."
@@ -19,6 +20,7 @@ def testDelete():
 
 def testCount():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     c = countPlayers()
     if c == '0':
@@ -31,6 +33,7 @@ def testCount():
 
 def testRegister():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     registerPlayer("Chandra Nalaar")
     c = countPlayers()
@@ -42,6 +45,7 @@ def testRegister():
 
 def testRegisterCountDelete():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     registerPlayer("Markov Chaney")
     registerPlayer("Joe Malik")
@@ -60,60 +64,79 @@ def testRegisterCountDelete():
 
 def testStandingsBeforeMatches():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     registerPlayer("Melpomene Murray")
     registerPlayer("Randy Schwartz")
+    registerTournament("Test Standings")
+    enterPlayerInTournament("Test Standings", "Melpomene Murray")
+    enterPlayerInTournament("Test Standings", "Randy Schwartz")
     standings = playerStandings()
     if len(standings) < 2:
-        raise ValueError("Players should appear in playerStandings even before "
-                         "they have played any matches.")
+        raise ValueError("Players should appear in playerStandings even before"
+                         " they have played any matches.")
     elif len(standings) > 2:
         raise ValueError("Only registered players should appear in standings.")
-    if len(standings[0]) != 4:
-        raise ValueError("Each playerStandings row should have four columns.")
-    [(id1, name1, wins1, matches1), (id2, name2, wins2, matches2)] = standings
+    if len(standings[0]) != 6:
+        raise ValueError("Each playerStandings row should have six columns.")
+    [(tid1, id1, name1, wins1, matches1, ow1), (tid2, id2, name2, wins2,
+                                                matches2, ow2)] = standings
     if matches1 != 0 or matches2 != 0 or wins1 != 0 or wins2 != 0:
         raise ValueError(
             "Newly registered players should have no matches or wins.")
     if set([name1, name2]) != set(["Melpomene Murray", "Randy Schwartz"]):
-        raise ValueError("Registered players' names should appear in standings, "
-                         "even if they have no matches played.")
-    print "6. Newly registered players appear in the standings with no matches."
+        raise ValueError("Registered players' names should appear in "
+                         " standings even if they have no matches played.")
+    print "6. Newly registered players appear in the standings with no \
+                matches."
 
 
 def testReportMatches():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     registerPlayer("Bruno Walton")
     registerPlayer("Boots O'Neal")
     registerPlayer("Cathy Burton")
     registerPlayer("Diane Grant")
+    tid = registerTournament("Test Report Matches")
+    enterPlayerInTournament("Test Report Matches", "Bruno Walton")
+    enterPlayerInTournament("Test Report Matches", "Boots O'Neal")
+    enterPlayerInTournament("Test Report Matches", "Cathy Burton")
+    enterPlayerInTournament("Test Report Matches", "Diane Grant")
     standings = playerStandings()
-    [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    [id1, id2, id3, id4] = [row[1] for row in standings]
+    reportMatch(tid, id1, id2)
+    reportMatch(tid, id3, id4)
     standings = playerStandings()
-    for (i, n, w, m) in standings:
+    for (t, i, n, w, m, o) in standings:
         if m != 1:
             raise ValueError("Each player should have one match recorded.")
-        if i in (id1, id3) and w != 1:
+        if i in (tid, id1, id3) and w != 1:
             raise ValueError("Each match winner should have one win recorded.")
-        elif i in (id2, id4) and w != 0:
-            raise ValueError("Each match loser should have zero wins recorded.")
+        elif i in (tid, id2, id4) and w != 0:
+            raise ValueError("Each match loser should have zero wins "
+                             "recorded.")
     print "7. After a match, players have updated standings."
 
 
 def testPairings():
     deleteMatches()
+    deleteTournaments()
     deletePlayers()
     registerPlayer("Twilight Sparkle")
     registerPlayer("Fluttershy")
     registerPlayer("Applejack")
     registerPlayer("Pinkie Pie")
+    tid = registerTournament("Test Pairings")
+    enterPlayerInTournament("Test Pairings", "Twilight Sparkle")
+    enterPlayerInTournament("Test Pairings", "Fluttershy")
+    enterPlayerInTournament("Test Pairings", "Applejack")
+    enterPlayerInTournament("Test Pairings", "Pinkie Pie")
     standings = playerStandings()
-    [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    [id1, id2, id3, id4] = [row[1] for row in standings]
+    reportMatch(tid, id1, id2)
+    reportMatch(tid, id3, id4)
     pairings = swissPairings()
     if len(pairings) != 2:
         raise ValueError(

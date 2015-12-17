@@ -127,13 +127,16 @@ def playerStandings():
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
-    db_cursor.execute("SELECT player_id, player_name, count(match_winner) \
-                        AS matches_won, (SELECT count(*) \
-                        FROM matches WHERE player_id = match_winner \
-                        OR player_id = match_loser) AS matches_played \
-                        FROM players LEFT JOIN matches \
-                        ON player_id = match_winner GROUP BY player_id \
-                        ORDER BY matches_won desc")
+    db_cursor.execute("SELECT won.tournament_id, players.player_id, player_name, \
+                        matches_won, matches_played, opponents_wins \
+                        FROM players LEFT JOIN won \
+                        ON players.player_id = won.player_id LEFT JOIN \
+                        played ON won.player_id = played.player_id AND \
+                        won.tournament_id = played.tournament_id LEFT JOIN \
+                        omw ON played.player_id = omw.player_id AND \
+                        played.tournament_id = omw.tournament_id ORDER BY \
+                        omw.tournament_id, matches_won DESC, \
+                        omw.opponents_wins DESC")
     standings = db_cursor.fetchall()
     db.close
     return standings
@@ -174,21 +177,12 @@ def swissPairings():
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
     db_cursor.execute("SELECT * FROM standings")
-    print(db_cursor)
-    ids, names, wins, played, omw = zip(*db_cursor)
-    if (len(ids)) % 2 == 0:
-        print('Even number of players')
+    tourney, ids, names, wins, played, omw = zip(*db_cursor)
     first_ids = ids[::2]
     second_ids = ids[1::2]
     first_names = names[::2]
     second_names = names[1::2]
     pairings = zip(first_ids, first_names, second_ids, second_names)
 
-#    for count in range(db_cursor.rowcount/2):
-#        player1 = db_cursor.fetchone()
-#        player2 = db_cursor.fetchone()
-
-#        pairing = (player1[0], player1[1], player2[0], player2[1])
-#        pairings.append(pairing)
     db.close()
     return pairings

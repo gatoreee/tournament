@@ -67,6 +67,7 @@ def registerPlayer(name):
 
 def registerTournament(tournament):
     """Adds a tournament to the tournaments table.
+       Retuns the tournament id
 
     Args:
         name: name of the tournament
@@ -127,16 +128,7 @@ def playerStandings():
     """
     db = psycopg2.connect("dbname=tournament")
     db_cursor = db.cursor()
-    db_cursor.execute("SELECT won.tournament_id, players.player_id, player_name, \
-                        matches_won, matches_played, opponents_wins \
-                        FROM players LEFT JOIN won \
-                        ON players.player_id = won.player_id LEFT JOIN \
-                        played ON won.player_id = played.player_id AND \
-                        won.tournament_id = played.tournament_id LEFT JOIN \
-                        omw ON played.player_id = omw.player_id AND \
-                        played.tournament_id = omw.tournament_id ORDER BY \
-                        omw.tournament_id, matches_won DESC, \
-                        omw.opponents_wins DESC")
+    db_cursor.execute("SELECT * FROM standings")
     standings = db_cursor.fetchall()
     db.close
     return standings
